@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extraction EXIF des Images</title>
+    <!-- Importation de la bibliothèque EXIF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js"></script>
+</head>
+<body>
+    <h1>Extraire les métadonnées EXIF d'une image</h1>
+
+    <!-- Input pour charger une image -->
+    <input type="file" id="fileInput" accept="image/jpeg" />
+    <div id="exifData"></div>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+
+            // Vérification du format de fichier
+            if (!file) {
+                document.getElementById('exifData').innerHTML = "<p style='color: red;'>Aucune image sélectionnée.</p>";
+                return;
+            } else if (file.type !== "image/jpeg") {
+                document.getElementById('exifData').innerHTML = "<p style='color: red;'>Veuillez sélectionner un fichier JPEG.</p>";
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+
+                img.onload = function() {
+                    EXIF.getData(img, function() {
+                        const allMetaData = EXIF.getAllTags(this);
+
+                        // Vérifie si des métadonnées EXIF sont disponibles
+                        if (Object.keys(allMetaData).length === 0) {
+                            document.getElementById('exifData').innerHTML = "<p style='color: red;'>Aucune métadonnée EXIF trouvée dans cette image.</p>";
+                            console.log("Pas de métadonnées EXIF disponibles.");
+                        } else {
+                            let output = "<h2>Métadonnées EXIF :</h2>";
+                            output += "<ul>";
+                            for (let key in allMetaData) {
+                                output += `<li><strong>${key}:</strong> ${allMetaData[key]}</li>`;
+                            }
+                            output += "</ul>";
+                            document.getElementById('exifData').innerHTML = output;
+                            console.log("Métadonnées EXIF trouvées : ", allMetaData);
+                        }
+                    });
+                };
+
+                img.onerror = function() {
+                    document.getElementById('exifData').innerHTML = "<p style='color: red;'>Impossible de charger l'image. Veuillez réessayer avec une autre image.</p>";
+                    console.error("Erreur lors du chargement de l'image.");
+                };
+            };
+
+            reader.onerror = function() {
+                document.getElementById('exifData').innerHTML = "<p style='color: red;'>Erreur lors de la lecture du fichier image.</p>";
+                console.error("Erreur lors de la lecture du fichier.");
+            };
+
+            reader.readAsDataURL(file);
+        });
+    </script>
+</body>
+</html>
